@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Изменение родителя</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Изменение родителя</h2>
+        <form id="editParentForm">
+            <label>Выберите пользователя:
+                <select id="userID" required></select>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const parentId = urlParams.get('id');
+
+        async function loadParent() {
+            const response = await fetch(`/api/parents/${parentId}`);
+            const parent = await response.json();
+            document.getElementById('userID').value = parent.UserID;
+        }
+
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            const userSelect = document.getElementById('userID');
+            userSelect.innerHTML = ''; // Очищаем список пользователей
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.ID;
+                option.textContent = `${user.FirstName} ${user.LastName}`;
+                userSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('editParentForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedParent = {
+                UserID: document.getElementById('userID').value
+            };
+
+            await fetch(`/api/parents/${parentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedParent)
+            });
+            window.location.href = '/parents.html'; // Возвращаемся на страницу родителей после сохранения
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Загрузка данных родителя и пользователей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadParent();
+            loadUsers();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

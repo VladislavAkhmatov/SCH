@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Изменение центра</title>
+  <link rel="stylesheet" href="./css/style.css">
+
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Изменение центра</h2>
+    <form id="editCenterForm">
+      <label>Название: <input type="text" id="name" required></label><br>
+      <label>Адрес: <input type="text" id="address" required></label><br>
+      <button type="submit">Сохранить</button>
+    </form>
+    <button onclick="goBack()">Назад</button>
+  </div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const centerId = urlParams.get('id');
+
+    async function loadCenter() {
+      const response = await fetch(`/api/centers/${centerId}`);
+      const center = await response.json();
+      document.getElementById('name').value = center.Name;
+      document.getElementById('address').value = center.Address;
+    }
+
+    document.getElementById('editCenterForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const updatedCenter = {
+        Name: document.getElementById('name').value,
+        Address: document.getElementById('address').value
+      };
+
+      await fetch(`/api/centers/${centerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedCenter)
+      });
+      window.location.href = '/centers.html'; // Возвращаемся на страницу центров после сохранения
+    });
+
+    function goBack() {
+      window.history.back();
+    }
+
+    // Загрузка данных центра при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadCenter);
+  </script>
+  <script src="sidebar.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Изменение ученика</title>
+    <link rel="stylesheet" href="./css/style.css">
+
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Изменение ученика</h2>
+        <form id="editStudentForm">
+            <label>Выберите пользователя:
+                <select id="userID" required></select>
+            </label><br>
+            <label>Выберите родителя:
+                <select id="parentID" required></select>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('id');
+
+        async function loadStudent() {
+            const response = await fetch(`/api/students/${studentId}`);
+            const student = await response.json();
+            document.getElementById('userID').value = student.UserID;
+            document.getElementById('parentID').value = student.ParentID;
+        }
+
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            const userSelect = document.getElementById('userID');
+            userSelect.innerHTML = ''; // Очищаем список пользователей
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.ID;
+                option.textContent = `${user.FirstName} ${user.LastName}`;
+                userSelect.appendChild(option);
+            });
+        }
+
+        async function loadParents() {
+            const response = await fetch('/api/parents');
+            const parents = await response.json();
+            const parentSelect = document.getElementById('parentID');
+            parentSelect.innerHTML = ''; // Очищаем список родителей
+
+            parents.forEach(parent => {
+                const option = document.createElement('option');
+                option.value = parent.ID;
+                option.textContent = `${parent.FirstName} ${parent.LastName}`;
+                parentSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('editStudentForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedStudent = {
+                UserID: document.getElementById('userID').value,
+                ParentID: document.getElementById('parentID').value
+            };
+
+            await fetch(`/api/students/${studentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedStudent)
+            });
+            window.location.href = '/students.html'; // Возвращаемся на страницу учеников после сохранения
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Загрузка данных ученика, пользователей и родителей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudent();
+            loadUsers();
+            loadParents();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

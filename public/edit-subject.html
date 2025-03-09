@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Изменение предмета</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Изменение предмета</h2>
+        <form id="editSubjectForm">
+            <label>Название предмета:
+                <input type="text" id="subjectName" required>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const subjectId = urlParams.get('id');
+
+        async function loadSubject() {
+            const response = await fetch(`/api/subjects/${subjectId}`);
+            const subject = await response.json();
+            document.getElementById('subjectName').value = subject.SubjectName;
+        }
+
+        document.getElementById('editSubjectForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedSubject = {
+                SubjectName: document.getElementById('subjectName').value
+            };
+
+            await fetch(`/api/subjects/${subjectId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedSubject)
+            });
+            window.location.href = '/subjects.html'; // Возвращаемся на страницу предметов после сохранения
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Загрузка данных предмета при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadSubject);
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

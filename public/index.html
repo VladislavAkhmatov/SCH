@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Авторизация</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    form {
+      max-width: 400px;
+      margin: auto;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Авторизация</h2>
+
+    <form id="loginForm">
+      <label for="phoneNumber">Номер телефона:</label>
+      <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Введите номер телефона" required>
+
+      <label for="password">Пароль:</label>
+      <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+
+      <button type="button" onclick="login()">Войти</button>
+
+      <div id="error" class="error"></div>
+    </form>
+  </div>
+  <script>
+    async function login() {
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phoneNumber, password })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        window.location.href = 'home.html';
+      } else {
+        document.getElementById('error').textContent = result.error;
+      }
+    }
+  </script>
+  <script src="sidebar.js"></script>
+
+
+</body>
+
+</html>

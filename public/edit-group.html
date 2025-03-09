@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Изменение группы</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Изменение группы</h2>
+        <form id="editGroupForm">
+            <label>Название группы:
+                <input type="text" id="groupName" required>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+
+        <h3>Ученики в группе</h3>
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Имя </th>
+                    <th>Фамилия </th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>Добавить ученика</h3>
+        <label for="studentSelect">Выберите ученика:</label>
+        <select id="studentSelect"></select>
+        <button id="addStudentButton">Добавить ученика</button>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupId = urlParams.get('id');
+
+        async function loadGroup() {
+            try {
+                const response = await fetch(`/api/groups/${groupId}`);
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить данные группы');
+                }
+                const group = await response.json();
+                document.getElementById('groupName').value = group.Name;
+                loadStudents();
+                loadAvailableStudents();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const response = await fetch(`/api/groups/${groupId}/students`);
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить список учеников');
+                }
+                const students = await response.json();
+                const studentsTableBody = document.getElementById('studentsTable').querySelector('tbody');
+                studentsTableBody.innerHTML = '';
+
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${student.StudentFirstName}</td>
+                        <td>${student.StudentLastName}</td>
+                        <td><button onclick="removeStudent(${student.ID})">Удалить</button></td>
+                    `;
+                    studentsTableBody.appendChild(row);
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function loadAvailableStudents() {
+            try {
+                const response = await fetch(`/api/groups/${groupId}/available-students`);
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить список доступных учеников');
+                }
+                const students = await response.json();
+                const studentSelect = document.getElementById('studentSelect');
+                studentSelect.innerHTML = ''; // Очистка списка перед заполнением
+
+                students.forEach(student => {
+                    const opt = document.createElement('option');
+                    opt.value = student.ID;
+                    opt.text = `${student.StudentFirstName} ${student.StudentLastName}`;
+                    studentSelect.add(opt);
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        document.getElementById('editGroupForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedGroup = { Name: document.getElementById('groupName').value };
+
+            try {
+                const response = await fetch(`/api/groups/${groupId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedGroup)
+                });
+                if (!response.ok) {
+                    throw new Error('Не удалось сохранить изменения');
+                }
+                window.location.href = '/groups.html';
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('addStudentButton').addEventListener('click', async () => {
+            const studentId = document.getElementById('studentSelect').value;
+            if (studentId) {
+                try {
+                    const response = await fetch(`/api/groups/${groupId}/students`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ studentId })
+                    });
+                    if (!response.ok) {
+                        throw new Error('Не удалось добавить ученика в группу');
+                    }
+                    loadStudents();
+                    loadAvailableStudents();
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        });
+
+        async function removeStudent(studentId) {
+            if (confirm("Вы уверены, что хотите удалить этого ученика из группы?")) {
+                try {
+                    const response = await fetch(`/api/groups/${groupId}/students/${studentId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) {
+                        throw new Error('Не удалось удалить ученика из группы');
+                    }
+                    loadStudents();
+                    loadAvailableStudents();
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGroup();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

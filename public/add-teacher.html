@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Добавление учителя</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Добавление нового учителя</h2>
+        <form id="addTeacherForm">
+            <label>Выберите пользователя:
+                <select id="userID" required></select>
+            </label><br>
+            <label>Выберите предмет:
+                <select id="subjectID" required></select>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            const userSelect = document.getElementById('userID');
+            userSelect.innerHTML = ''; // Очищаем список пользователей
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.ID;
+                option.textContent = `${user.FirstName} ${user.LastName}`;
+                userSelect.appendChild(option);
+            });
+        }
+
+        async function loadSubjects() {
+            const response = await fetch('/api/subjects');
+            const subjects = await response.json();
+            const subjectSelect = document.getElementById('subjectID');
+            subjectSelect.innerHTML = ''; // Очищаем список предметов
+
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.ID;
+                option.textContent = subject.SubjectName;
+                subjectSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('addTeacherForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const newTeacher = {
+                UserID: document.getElementById('userID').value,
+                SubjectID: document.getElementById('subjectID').value
+            };
+
+            await fetch('/api/teachers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newTeacher)
+            });
+            window.location.href = '/teachers.html'; // Возвращаемся на страницу учителей после сохранения
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Загрузка пользователей и предметов при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            loadSubjects();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

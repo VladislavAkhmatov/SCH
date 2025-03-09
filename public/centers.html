@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Список центров</title>
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+
+    button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Список центров</h2>
+    <table id="centerTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Адрес</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="navigateToAddCenter()">Добавить</button>
+    <button onclick="location.href='home.html'">Назад</button>
+  </div>
+
+
+
+  <script>
+    // Получаем и отображаем список центров
+    async function loadCenters() {
+      const response = await fetch('/api/centers');
+      const centers = await response.json();
+      const centerTable = document.getElementById('centerTable').getElementsByTagName('tbody')[0];
+      centerTable.innerHTML = ''; // Очищаем таблицу
+
+      centers.forEach(center => {
+        const row = centerTable.insertRow();
+        row.insertCell(0).innerText = center.ID;
+        row.insertCell(1).innerText = center.Name;
+        row.insertCell(2).innerText = center.Address;
+
+        const actionCell = row.insertCell(3);
+        actionCell.innerHTML = `
+          <button onclick="navigateToEditCenter(${center.ID})">Изменить</button>
+          <button onclick="deleteCenter(${center.ID})">Удалить</button>
+        `;
+      });
+    }
+
+    // Переход на страницу добавления центра
+    function navigateToAddCenter() {
+      window.location.href = '/add-center.html';
+    }
+
+    // Переход на страницу редактирования центра
+    function navigateToEditCenter(id) {
+      window.location.href = `/edit-center.html?id=${id}`;
+    }
+
+    // Удаление центра с подтверждением
+    async function deleteCenter(id) {
+      if (confirm('Вы уверены, что хотите удалить центр?')) {
+        await fetch(`/api/centers/${id}`, { method: 'DELETE' });
+        loadCenters(); // Обновляем список центров
+      }
+    }
+
+    // Загрузка центров при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadCenters);
+  </script>
+  <script src="sidebar.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Оценки за урок</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2 id="lessonTitle">Оценки за урок</h2>
+        <table id="lessonTable">
+            <thead>
+                <tr>
+                    <th>Ученик</th>
+                    <th>Присутствовал</th>
+                    <th>Домашняя работа</th>
+                    <th>Активность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Строки студентов будут загружены динамически -->
+            </tbody>
+        </table>
+        <button onclick="saveLessonGrades()">Сохранить оценки</button>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const date = urlParams.get("date");
+            const groupId = urlParams.get("groupId");
+            const subjectId = urlParams.get("subjectId");
+
+            loadLessonData(date, groupId, subjectId);
+        });
+
+        function loadLessonData(date, groupId, subjectId) {
+            // Запрос на получение данных о предмете
+            fetch(`/api/subjects/${subjectId}`)
+                .then(response => response.json())
+                .then(subject => {
+                    // Обновляем заголовок с названием предмета и датой
+                    const lessonTitle = document.getElementById("lessonTitle");
+                    const lessonDate = new Date(date);
+                    const formattedDate = lessonDate.toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    lessonTitle.textContent = `Оценки за урок: ${subject.SubjectName} (${formattedDate})`;
+
+                    // Загрузка данных об учениках после обновления заголовка
+                    return fetch(`/api/groups/${groupId}/students`);
+                })
+                .then(response => response.json())
+                .then(students => {
+                    const tbody = document.getElementById("lessonTable").querySelector("tbody");
+                    tbody.innerHTML = "";
+
+                    students.forEach(student => {
+                        const row = document.createElement("tr");
+
+                        const nameCell = document.createElement("td");
+                        nameCell.textContent = `${student.StudentFirstName} ${student.StudentLastName}`;
+                        row.appendChild(nameCell);
+
+                        const presenceCell = document.createElement("td");
+                        const presenceCheckbox = document.createElement("input");
+                        presenceCheckbox.type = "checkbox";
+                        presenceCheckbox.dataset.studentId = student.ID;
+                        presenceCheckbox.dataset.date = date;
+                        presenceCheckbox.dataset.type = "presence";
+                        presenceCell.appendChild(presenceCheckbox);
+                        row.appendChild(presenceCell);
+
+                        const homeworkCell = document.createElement("td");
+                        const homeworkInput = document.createElement("input");
+                        homeworkInput.type = "number";
+                        homeworkInput.min = 1;
+                        homeworkInput.max = 10;
+                        homeworkInput.dataset.studentId = student.ID;
+                        homeworkInput.dataset.date = date;
+                        homeworkInput.dataset.type = "homework";
+                        homeworkCell.appendChild(homeworkInput);
+                        row.appendChild(homeworkCell);
+
+                        const activityCell = document.createElement("td");
+                        const activityInput = document.createElement("input");
+                        activityInput.type = "number";
+                        activityInput.min = 1;
+                        activityInput.max = 10;
+                        activityInput.dataset.studentId = student.ID;
+                        activityInput.dataset.date = date;
+                        activityInput.dataset.type = "activity";
+                        activityCell.appendChild(activityInput);
+                        row.appendChild(activityCell);
+
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error("Ошибка при загрузке данных:", error));
+        }
+
+        function saveLessonGrades() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const subjectId = urlParams.get("subjectId");
+            const gradesData = [];
+            const rows = document.querySelectorAll("#lessonTable tbody tr");
+
+            rows.forEach(row => {
+                const studentId = row.querySelector("input[type='checkbox']").dataset.studentId;
+                const presence = row.querySelector("input[type='checkbox']").checked;
+                const homework = row.querySelector("input[type='number'][data-type='homework']").value;
+                const activity = row.querySelector("input[type='number'][data-type='activity']").value;
+
+                gradesData.push({
+                    studentId,
+                    date: row.querySelector("input[type='checkbox']").dataset.date,
+                    presence,
+                    homework: homework ? parseInt(homework) : null,
+                    activity: activity ? parseInt(activity) : null
+                });
+            });
+
+            // Отправка данных на сервер
+            fetch('/api/grades', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ gradesData, subjectId })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.message) {
+                        alert("Оценки успешно сохранены!");
+                    } else {
+                        alert("Ошибка при сохранении оценок: " + result.error);
+                    }
+                })
+                .catch(error => {
+                    alert("Ошибка при отправке данных: " + error.message);
+                });
+        }
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

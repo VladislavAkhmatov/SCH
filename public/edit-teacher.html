@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Изменение учителя</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Изменение учителя</h2>
+        <form id="editTeacherForm">
+            <label>Выберите пользователя:
+                <select id="userID" required></select>
+            </label><br>
+            <label>Выберите предмет:
+                <select id="subjectID" required></select>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const teacherId = urlParams.get('id');
+
+        async function loadTeacher() {
+            const response = await fetch(`/api/teachers/${teacherId}`);
+            const teacher = await response.json();
+            document.getElementById('userID').value = teacher.UserID;
+            document.getElementById('subjectID').value = teacher.SubjectID;
+        }
+
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            const userSelect = document.getElementById('userID');
+            userSelect.innerHTML = ''; // Очищаем список пользователей
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.ID;
+                option.textContent = `${user.FirstName} ${user.LastName}`;
+                userSelect.appendChild(option);
+            });
+        }
+
+        async function loadSubjects() {
+            const response = await fetch('/api/subjects');
+            const subjects = await response.json();
+            const subjectSelect = document.getElementById('subjectID');
+            subjectSelect.innerHTML = ''; // Очищаем список предметов
+
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.ID;
+                option.textContent = subject.SubjectName;
+                subjectSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('editTeacherForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedTeacher = {
+                UserID: document.getElementById('userID').value,
+                SubjectID: document.getElementById('subjectID').value
+            };
+
+            await fetch(`/api/teachers/${teacherId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedTeacher)
+            });
+            window.location.href = '/teachers.html'; // Возвращаемся на страницу учителей после сохранения
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Загрузка данных учителя и пользователей при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTeacher();
+            loadUsers();
+            loadSubjects();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

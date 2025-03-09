@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить пользователя</title>
+    <link rel="stylesheet" href="./css/style.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        form {
+            display: inline-block;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input {
+            width: 200px;
+            padding: 5px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h1>Добавить пользователя</h1>
+        <form id="addUserForm">
+            <label for="PhoneNumber">Телефон:</label>
+            <input type="text" id="PhoneNumber" required>
+
+            <label for="Password">Пароль:</label>
+            <input type="password" id="Password" required>
+
+            <label for="Email">Email:</label>
+            <input type="email" id="Email" required>
+
+            <label for="FirstName">Имя:</label>
+            <input type="text" id="FirstName" required>
+
+            <label for="LastName">Фамилия:</label>
+            <input type="text" id="LastName" required>
+
+            <button type="submit">Добавить</button>
+            <button type="button" onclick="goBack()">Назад</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('addUserForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Предотвращаем перезагрузку страницы
+
+            const PhoneNumber = document.getElementById('PhoneNumber').value;
+            const Password = document.getElementById('Password').value;
+            const Email = document.getElementById('Email').value;
+            const FirstName = document.getElementById('FirstName').value;
+            const LastName = document.getElementById('LastName').value;
+
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ PhoneNumber, Password, Email, FirstName, LastName })
+            });
+
+            if (response.ok) {
+                alert('Пользователь добавлен успешно!');
+                window.location.href = 'users.html'; // Перенаправление на страницу пользователей
+            } else {
+                const error = await response.json();
+                alert(`Ошибка: ${error.error}`);
+            }
+        });
+
+        function goBack() {
+            window.history.back(); // Переход назад
+        }
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

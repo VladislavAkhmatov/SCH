@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Добавление центра</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Добавление нового центра</h2>
+    <form id="addCenterForm">
+      <label>Название: <input type="text" id="name" required></label><br>
+      <label>Адрес: <input type="text" id="address" required></label><br>
+      <button type="submit">Сохранить</button>
+    </form>
+    <button onclick="goBack()">Назад</button>
+  </div>
+  <script>
+    document.getElementById('addCenterForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const newCenter = {
+        Name: document.getElementById('name').value,
+        Address: document.getElementById('address').value
+      };
+
+      await fetch('/api/centers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newCenter)
+      });
+      window.location.href = '/centers.html'; // Возвращаемся на страницу центров после сохранения
+    });
+
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+  <script src="sidebar.js"></script>
+
+</body>
+
+</html>

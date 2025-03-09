@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Управление расписанием</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 8px;
+        }
+
+        .day-cell {
+            width: 120px;
+            height: 140px;
+            vertical-align: top;
+        }
+
+        .day-cell-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        button {
+            margin-right: 5px;
+        }
+    </style>
+    <link rel="stylesheet" href="./css/style.css">
+
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Управление расписанием</h2>
+
+        <label for="groupSelect">Группа:</label>
+        <select id="groupSelect" onchange="loadSchedule()"></select>
+
+        <label for="subjectSelect">Предмет:</label>
+        <select id="subjectSelect" onchange="loadTeachers(); loadSchedule();"></select>
+
+        <label for="teacherSelect">Преподаватель:</label>
+        <select id="teacherSelect"></select>
+
+        <label for="periodSelect">Период (год-месяц):</label>
+        <input type="month" id="periodSelect" onchange="populateCalendar(); loadSchedule();">
+
+        <table id="scheduleTable">
+            <thead>
+                <tr>
+                    <th>Понедельник</th>
+                    <th>Вторник</th>
+                    <th>Среда</th>
+                    <th>Четверг</th>
+                    <th>Пятница</th>
+                    <th>Суббота</th>
+                    <th>Воскресенье</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button onclick="saveSchedule()">Сохранить</button>
+        <button onclick="location.href='home.html'">Назад</button>
+    </div>
+    <script>
+        let centers = [];
+
+        async function loadGroups() {
+            const response = await fetch('/api/groups');
+            const groups = await response.json();
+            const groupSelect = document.getElementById('groupSelect');
+            groupSelect.innerHTML = '';
+
+            groups.forEach(group => {
+                const opt = document.createElement('option');
+                opt.value = group.ID;
+                opt.text = group.Name;
+                groupSelect.add(opt);
+            });
+        }
+
+        async function loadSubjects() {
+            const response = await fetch('/api/subjects');
+            const subjects = await response.json();
+            const subjectSelect = document.getElementById('subjectSelect');
+            subjectSelect.innerHTML = '';
+
+            subjects.forEach(subject => {
+                const opt = document.createElement('option');
+                opt.value = subject.ID;
+                opt.text = subject.SubjectName;
+                subjectSelect.add(opt);
+            });
+        }
+
+        async function loadTeachers() {
+            const subjectId = document.getElementById('subjectSelect').value;
+            const response = await fetch(`/api/teachers?subjectId=${subjectId}`);
+            const teachers = await response.json();
+            const teacherSelect = document.getElementById('teacherSelect');
+            teacherSelect.innerHTML = '';
+
+            teachers.forEach(teacher => {
+                const opt = document.createElement('option');
+                opt.value = teacher.ID;
+                opt.text = `${teacher.FirstName} ${teacher.LastName}`;
+                teacherSelect.add(opt);
+            });
+        }
+
+        async function loadCenters() {
+            const response = await fetch('/api/centers');
+            centers = await response.json();  // Сохраняем центры в глобальный массив
+        }
+
+        function populateCalendar() {
+            const period = document.getElementById('periodSelect').value;
+            const startDate = new Date(period + '-01');
+            const scheduleTable = document.getElementById('scheduleTable').getElementsByTagName('tbody')[0];
+            scheduleTable.innerHTML = '';
+
+            let row = document.createElement('tr');
+            let dayOfWeek = startDate.getDay();
+            if (dayOfWeek === 0) dayOfWeek = 7;
+
+            for (let i = 1; i < dayOfWeek; i++) {
+                row.appendChild(document.createElement('td'));
+            }
+
+            const daysInMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                if (row.children.length === 7) {
+                    scheduleTable.appendChild(row);
+                    row = document.createElement('tr');
+                }
+
+                const cell = document.createElement('td');
+                cell.classList.add('day-cell');
+                cell.dataset.date = `${period}-${String(day).padStart(2, '0')}`;
+
+                // Добавление времени и центра в ячейку
+                const timeInput = document.createElement('input');
+                timeInput.type = 'time';
+
+                const centerSelect = document.createElement('select');
+                centers.forEach(center => {
+                    const opt = document.createElement('option');
+                    opt.value = center.ID;
+                    opt.text = center.Name;
+                    centerSelect.add(opt);
+                });
+
+                cell.innerHTML = `<div class="day-cell-header">${day}</div>`;
+                cell.appendChild(timeInput);
+                cell.appendChild(document.createElement('br'));
+                cell.appendChild(centerSelect);
+                row.appendChild(cell);
+            }
+
+            if (row.children.length > 0) {
+                scheduleTable.appendChild(row);
+            }
+
+            loadSchedule();
+        }
+
+        async function loadSchedule() {
+            const groupId = document.getElementById('groupSelect').value;
+            const subjectId = document.getElementById('subjectSelect').value;
+            const period = document.getElementById('periodSelect').value;
+            const [year, month] = period.split('-');
+
+            const response = await fetch(`/api/schedule?groupId=${groupId}&subjectId=${subjectId}&month=${month}&year=${year}`);
+            const schedule = await response.json();
+
+            const dayCells = document.querySelectorAll('.day-cell');
+            dayCells.forEach(cell => {
+                const date = cell.dataset.date;
+                const matchingSchedule = schedule.find(item => item.Date === date);
+
+                // Удаляем существующий элемент с именем преподавателя (если есть)
+                const teacherDiv = cell.querySelector('.teacher-info');
+                if (teacherDiv) {
+                    cell.removeChild(teacherDiv);
+                }
+
+                if (matchingSchedule) {
+                    cell.querySelector('input[type="time"]').value = matchingSchedule.Time;
+                    cell.querySelector('select').value = matchingSchedule.CenterID;
+
+                    // Отображение преподавателя (если есть)
+                    const teacherName = `${matchingSchedule.TeacherFirstName} ${matchingSchedule.TeacherLastName}` || '—';
+                    const newTeacherDiv = document.createElement('div');
+                    newTeacherDiv.className = 'teacher-info'; // Добавляем класс для удобства
+                    newTeacherDiv.textContent = `Преподаватель: ${teacherName}`;
+                    cell.appendChild(newTeacherDiv);
+                } else {
+                    cell.querySelector('input[type="time"]').value = '';
+                    cell.querySelector('select').selectedIndex = 0;
+
+                    // Отображение прочерка, если нет записи
+                    const newTeacherDiv = document.createElement('div');
+                    newTeacherDiv.className = 'teacher-info'; // Добавляем класс для удобства
+                    newTeacherDiv.textContent = `Преподаватель: —`;
+                    cell.appendChild(newTeacherDiv);
+                }
+            });
+        }
+
+
+        async function saveSchedule() {
+            const groupId = document.getElementById('groupSelect').value;
+            const teacherId = document.getElementById('teacherSelect').value;
+            const subjectId = document.getElementById('subjectSelect').value;
+            const period = document.getElementById('periodSelect').value;
+
+            const schedules = Array.from(document.querySelectorAll('.day-cell'))
+                .filter(cell => cell.querySelector('input[type="time"]').value)
+                .map(cell => ({
+                    date: cell.dataset.date,
+                    time: cell.querySelector('input[type="time"]').value,
+                    groupId,
+                    teacherId,
+                    subjectId,
+                    centerId: cell.querySelector('select').value
+                }));
+
+            const response = await fetch('/api/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ schedules })
+            });
+
+            if (response.ok) {
+                alert('Расписание успешно сохранено');
+                loadSchedule();
+            } else {
+                const errorData = await response.json();
+                alert(`Ошибка при сохранении расписания: ${errorData.error}`);
+            }
+        }
+
+
+        // Загрузка данных при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadGroups();
+            await loadSubjects();
+            await loadCenters();
+            loadTeachers();
+        });
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

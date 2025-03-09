@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Добавление администратора</title>
+  <link rel="stylesheet" href="./css/style.css">
+
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Добавление нового администратора</h2>
+    <form id="addAdminForm">
+      <label>Выберите пользователя:
+        <select id="userID" required></select>
+      </label><br>
+      <label>Выберите центр:
+        <select id="centerID" required></select>
+      </label><br>
+      <button type="submit">Сохранить</button>
+    </form>
+    <button onclick="goBack()">Назад</button>
+  </div>
+  <script>
+    async function loadUsers() {
+      const response = await fetch('/api/users');
+      const users = await response.json();
+      const userSelect = document.getElementById('userID');
+      userSelect.innerHTML = ''; // Очищаем список пользователей
+
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.ID;
+        option.textContent = `${user.FirstName} ${user.LastName}`;
+        userSelect.appendChild(option);
+      });
+    }
+
+    async function loadCenters() {
+      const response = await fetch('/api/centers');
+      const centers = await response.json();
+      const centerSelect = document.getElementById('centerID');
+      centerSelect.innerHTML = ''; // Очищаем список центров
+
+      centers.forEach(center => {
+        const option = document.createElement('option');
+        option.value = center.ID;
+        option.textContent = center.Name;
+        centerSelect.appendChild(option);
+      });
+    }
+
+    document.getElementById('addAdminForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const newAdmin = {
+        UserID: document.getElementById('userID').value,
+        CenterID: document.getElementById('centerID').value
+      };
+
+      await fetch('/api/admins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newAdmin)
+      });
+      window.location.href = '/admins.html'; // Возвращаемся на страницу администраторов после сохранения
+    });
+
+    function goBack() {
+      window.history.back();
+    }
+
+    // Загрузка пользователей и центров при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      loadUsers();
+      loadCenters();
+    });
+  </script>
+  <script src="sidebar.js"></script>
+
+</body>
+
+</html>

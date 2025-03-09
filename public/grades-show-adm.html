@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Оценка учеников</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        select,
+        button {
+            margin: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .centered {
+            text-align: center;
+        }
+
+        #gradesTable {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Оценка учеников</h2>
+
+        <label for="groupSelect">Группа:</label>
+        <select id="groupSelect"></select>
+
+        <label for="subjectSelect">Предмет:</label>
+        <select id="subjectSelect" onchange="loadTeachers()"></select>
+
+        <label for="teacherSelect">Преподаватель:</label>
+        <select id="teacherSelect"></select>
+
+        <label for="monthSelect">Месяц:</label>
+        <input type="month" id="monthSelect">
+
+        <button onclick="generateTable()">Показать оценки</button>
+
+        <div id="gradesTable"></div>
+        <button onclick="saveGrades()">Сохранить изменения</button>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            loadGroups();
+            loadSubjects();
+        });
+
+        function loadGroups() {
+            fetch('/api/groups')
+                .then(response => response.json())
+                .then(groups => {
+                    const groupSelect = document.getElementById("groupSelect");
+                    groupSelect.innerHTML = '<option value="">Выберите группу</option>';
+                    groups.forEach(group => {
+                        const option = document.createElement("option");
+                        option.value = group.ID;
+                        option.textContent = group.Name;
+                        groupSelect.appendChild(option);
+                    });
+                });
+        }
+
+        function loadSubjects() {
+            fetch('/api/subjects')
+                .then(response => response.json())
+                .then(subjects => {
+                    const subjectSelect = document.getElementById("subjectSelect");
+                    subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
+                    subjects.forEach(subject => {
+                        const option = document.createElement("option");
+                        option.value = subject.ID;
+                        option.textContent = subject.SubjectName;
+                        subjectSelect.appendChild(option);
+                    });
+                });
+        }
+
+        function loadTeachers() {
+            const subjectId = document.getElementById("subjectSelect").value;
+            if (!subjectId) return;
+
+            fetch(`/api/teachers?subjectId=${subjectId}`)
+                .then(response => response.json())
+                .then(teachers => {
+                    const teacherSelect = document.getElementById("teacherSelect");
+                    teacherSelect.innerHTML = '<option value="">Выберите преподавателя</option>';
+                    teachers.forEach(teacher => {
+                        const option = document.createElement("option");
+                        option.value = teacher.ID;
+                        option.textContent = `${teacher.FirstName} ${teacher.LastName}`;
+                        teacherSelect.appendChild(option);
+                    });
+                });
+        }
+
+        function generateTable() {
+            const groupId = document.getElementById("groupSelect").value;
+            const subjectId = document.getElementById("subjectSelect").value;
+            const teacherId = document.getElementById("teacherSelect").value;
+            const month = document.getElementById("monthSelect").value;
+
+            if (!groupId || !subjectId || !teacherId || !month) {
+                alert("Пожалуйста, заполните все поля.");
+                return;
+            }
+
+            const [year, monthNumber] = month.split("-");
+
+            fetch(`/api/grades?groupId=${groupId}&subjectId=${subjectId}&teacherId=${teacherId}&month=${monthNumber}&year=${year}`)
+                .then(response => response.json())
+                .then(grades => {
+                    const tableContainer = document.getElementById("gradesTable");
+                    tableContainer.innerHTML = "";
+
+                    if (grades.length === 0) {
+                        tableContainer.innerHTML = "<p>Оценок не найдено.</p>";
+                        return;
+                    }
+
+                    const uniqueDates = [...new Set(grades.map(grade => grade.Date))].sort();
+                    const table = document.createElement("table");
+
+                    const headerRow = document.createElement("tr");
+                    headerRow.innerHTML = `<th>Ученик</th>`;
+                    uniqueDates.forEach(date => {
+                        const formattedDate = new Date(date).toLocaleDateString();
+                        headerRow.innerHTML += `<th>${formattedDate}</th>`;
+                    });
+                    table.appendChild(headerRow);
+
+                    const uniqueStudents = [...new Set(grades.map(grade => `${grade.StudentID}|${grade.StudentFirstName} ${grade.StudentLastName}`))];
+
+                    uniqueStudents.forEach(student => {
+                        const [studentId, studentName] = student.split('|');
+                        const row = document.createElement("tr");
+                        row.innerHTML = `<td>${studentName}</td>`;
+
+                        uniqueDates.forEach(date => {
+                            const gradeData = grades.find(grade => grade.StudentID == studentId && grade.Date === date);
+
+                            if (gradeData) {
+                                row.innerHTML += `
+                                <td>
+                                    <label>Присутствие:</label>
+                                    <input type="checkbox" ${gradeData.Presence ? 'checked' : ''} data-student="${studentId}" data-date="${date}" data-field="Presence"><br>
+                                    <label>Дом. работа:</label>
+                                    <input type="number" value="${gradeData.HomeworkGrade || ''}" min="1" max="10" data-student="${studentId}" data-date="${date}" data-field="HomeworkGrade"><br>
+                                    <label>Активность:</label>
+                                    <input type="number" value="${gradeData.ActivityGrade || ''}" min="1" max="10" data-student="${studentId}" data-date="${date}" data-field="ActivityGrade">
+                                </td>
+                            `;
+                            } else {
+                                row.innerHTML += `<td>-</td>`;
+                            }
+                        });
+
+                        table.appendChild(row);
+                    });
+
+                    tableContainer.appendChild(table);
+                });
+        }
+
+        function saveGrades() {
+            const inputs = document.querySelectorAll('#gradesTable input');
+            const gradesData = [];
+
+            inputs.forEach(input => {
+                const studentId = input.getAttribute('data-student');
+                const date = input.getAttribute('data-date');
+                const field = input.getAttribute('data-field');
+                const value = field === 'Presence' ? input.checked : input.value;
+
+                let gradeEntry = gradesData.find(grade => grade.studentId == studentId && grade.date == date);
+                if (!gradeEntry) {
+                    gradeEntry = { studentId, date, presence: null, homework: null, activity: null };
+                    gradesData.push(gradeEntry);
+                }
+                if (field === 'Presence') gradeEntry.presence = value ? 1 : 0;
+                if (field === 'HomeworkGrade') gradeEntry.homework = parseInt(value);
+                if (field === 'ActivityGrade') gradeEntry.activity = parseInt(value);
+            });
+
+            fetch('/api/grades', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gradesData, subjectId: document.getElementById("subjectSelect").value })
+            })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Ошибка сохранения оценок:', error));
+        }
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

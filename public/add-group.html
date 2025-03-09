@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Добавление группы</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Добавление новой группы</h2>
+        <form id="addGroupForm">
+            <label>Название группы:
+                <input type="text" id="groupName" required>
+            </label><br>
+            <button type="submit">Сохранить</button>
+        </form>
+        <button onclick="goBack()">Назад</button>
+    </div>
+    <script>
+        document.getElementById('addGroupForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const newGroup = { Name: document.getElementById('groupName').value };
+
+            await fetch('/api/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newGroup)
+            });
+            window.location.href = '/groups.html';
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>

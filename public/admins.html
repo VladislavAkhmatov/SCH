@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Список администраторов</title>
+  <link rel="stylesheet" href="./css/style.css">
+
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+
+    button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainContent">
+    <span id="openSidebarBtn">&#9776; Меню</span>
+    <h2>Список администраторов</h2>
+    <table id="adminTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Имя</th>
+          <th>Фамилия</th>
+          <th>Email</th>
+          <th>Телефон</th>
+          <th>Центр</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button onclick="navigateToAddAdmin()">Добавить</button>
+    <button onclick="location.href='home.html'">Назад</button>
+  </div>
+  <script>
+    // Получаем и отображаем список администраторов
+    async function loadAdmins() {
+      const response = await fetch('/api/admins');
+      const admins = await response.json();
+      const adminTable = document.getElementById('adminTable').getElementsByTagName('tbody')[0];
+      adminTable.innerHTML = ''; // Очищаем таблицу
+
+      admins.forEach(admin => {
+        const row = adminTable.insertRow();
+        row.insertCell(0).innerText = admin.ID;
+        row.insertCell(1).innerText = admin.FirstName;
+        row.insertCell(2).innerText = admin.LastName;
+        row.insertCell(3).innerText = admin.Email;
+        row.insertCell(4).innerText = admin.PhoneNumber;
+        row.insertCell(5).innerText = admin.CenterName || 'Не назначен'; // Отображаем название центра или 'Не назначен'
+
+        const actionCell = row.insertCell(6);
+        actionCell.innerHTML = `
+          <button onclick="navigateToEditAdmin(${admin.ID})">Изменить</button>
+          <button onclick="deleteAdmin(${admin.ID})">Удалить</button>
+        `;
+      });
+    }
+
+    // Переход на страницу добавления администратора
+    function navigateToAddAdmin() {
+      window.location.href = '/add-admin.html';
+    }
+
+    // Переход на страницу редактирования администратора
+    function navigateToEditAdmin(id) {
+      window.location.href = `/edit-admin.html?id=${id}`;
+    }
+
+    // Удаление администратора с подтверждением
+    async function deleteAdmin(id) {
+      if (confirm('Вы уверены, что хотите удалить администратора?')) {
+        await fetch(`/api/admins/${id}`, { method: 'DELETE' });
+        loadAdmins(); // Обновляем список администраторов
+      }
+    }
+
+    // Загрузка администраторов при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadAdmins);
+  </script>
+  <script src="sidebar.js"></script>
+
+</body>
+
+</html>

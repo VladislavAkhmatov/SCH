@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Список групп</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 8px;
+        }
+
+        button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainContent">
+        <span id="openSidebarBtn">&#9776; Меню</span>
+        <h2>Список групп</h2>
+        <table id="groupTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="navigateToAddGroup()">Добавить</button>
+        <button onclick="location.href='home.html'">Назад</button>
+    </div>
+
+
+    <script>
+        async function loadGroups() {
+            const response = await fetch('/api/groups');
+            const groups = await response.json();
+            const groupTable = document.getElementById('groupTable').getElementsByTagName('tbody')[0];
+            groupTable.innerHTML = ''; // Очищаем таблицу
+
+            groups.forEach(group => {
+                const row = groupTable.insertRow();
+                row.insertCell(0).innerText = group.ID;
+                row.insertCell(1).innerText = group.Name;
+
+                const actionCell = row.insertCell(2);
+                actionCell.innerHTML = `
+                    <button onclick="navigateToEditGroup(${group.ID})">Изменить</button>
+                    <button onclick="deleteGroup(${group.ID})">Удалить</button>
+                `;
+            });
+        }
+
+        function navigateToAddGroup() {
+            window.location.href = '/add-group.html';
+        }
+
+        function navigateToEditGroup(id) {
+            window.location.href = `/edit-group.html?id=${id}`;
+        }
+
+        async function deleteGroup(id) {
+            if (confirm('Вы уверены, что хотите удалить группу?')) {
+                await fetch(`/api/groups/${id}`, { method: 'DELETE' });
+                loadGroups();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadGroups);
+    </script>
+    <script src="sidebar.js"></script>
+
+</body>
+
+</html>
