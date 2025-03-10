@@ -1,7 +1,7 @@
-const Subject = require('../models/subjectModel')
+const Teacher = require('../models/teacherModel')
 
-exports.getAllSubjects = (req, res) => {
-    Subject.getAll((err, row) => {
+exports.getAllTeacher = (req, res) => {
+    Teacher.getAll((err, row) => {
         if (err) {
             res.status(500).json({ error: err.message })
             return
@@ -10,26 +10,25 @@ exports.getAllSubjects = (req, res) => {
     })
 }
 
-exports.getSubjectById = (req, res) => {
+exports.getTeacherById = (req, res) => {
     const { id } = req.params
-    Subject.getById(id, (err, row) => {
+    Teacher.getById(id, (err, row) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return
         }
         if (!row) {
-            res.status(404).json({ error: 'Предмет не найден' });
+            res.status(404).json({ error: 'Учитель не найден(а)' });
             return
         }
         res.json(row)
     })
 }
 
-exports.createSubject = (req, res) => {
-    const subject = req.body
-    console.log(subject);
+exports.createTeacher = (req, res) => {
+    const teacher = req.body
 
-    Subject.create(subject, (err, result) => {
+    Teacher.create(teacher, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
@@ -38,31 +37,31 @@ exports.createSubject = (req, res) => {
     });
 };
 
-exports.updateSubject = (req, res) => {
+exports.updateTeacher = (req, res) => {
     const { id } = req.params
-    const subject = req.body
-    Subject.update(id, subject, (err, result) => {
+    const teacher = req.body
+    Teacher.update(id, teacher, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
         }
         if (result.updated === 0) {
-            res.status(404).json({ error: 'Предмет не найден' })
+            res.status(404).json({ error: 'Учитель не найден(а)' })
             return
         }
         res.json(result)
     })
 }
 
-exports.deleteSubject = (req, res) => {
+exports.deleteTeacher = (req, res) => {
     const { id } = req.params
-    Subject.delete(id, (err, result) => {
+    Teacher.delete(id, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
         }
         if (result.deleted === 0) {
-            res.status(404).json({ error: 'Предмет не найден' })
+            res.status(404).json({ error: 'Учитель не найден(а)' })
             return
         }
         res.json(result)

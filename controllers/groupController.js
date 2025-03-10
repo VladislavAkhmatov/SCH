@@ -10,7 +10,7 @@ exports.getAllGroups = (req, res) => {
     })
 }
 
-exports.getGroupsById = (req, res) => {
+exports.getGroupById = (req, res) => {
     const { id } = req.params
     Group.getById(id, (err, row) => {
         if (err) {
@@ -18,7 +18,7 @@ exports.getGroupsById = (req, res) => {
             return
         }
         if (!row) {
-            res.status(404).json({ error: 'Группа не найден' });
+            res.status(404).json({ error: 'Группа не найдена' });
             return
         }
         res.json(row)
@@ -46,7 +46,7 @@ exports.updateGroup = (req, res) => {
             return
         }
         if (result.updated === 0) {
-            res.status(404).json({ error: 'Группа не найден' })
+            res.status(404).json({ error: 'Группа не найдена' })
             return
         }
         res.json(result)
@@ -61,7 +61,7 @@ exports.deleteGroup = (req, res) => {
             return
         }
         if (result.deleted === 0) {
-            res.status(404).json({ error: 'Группа не найден' })
+            res.status(404).json({ error: 'Группа не найдена' })
             return
         }
         res.json(result)

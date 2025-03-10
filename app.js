@@ -22,11 +22,19 @@ const authRoutes = require('./routes/authRoute');
 const centerRoutes = require('./routes/centerRoute');
 const subjectRoutes = require('./routes/subjectRoute');
 const groupRoutes = require('./routes/groupRoute');
+const studentRoutes = require('./routes/studentRoute');
+const parentRoutes = require('./routes/parentRoute');
+const teacherRoutes = require('./routes/teacherRoute');
+const adminRoutes = require('./routes/adminRoute');
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/centers', centerRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/parents', parentRoutes);
+app.use('/api/teachers', teacherRoutes);
+app.use('/api/admins', adminRoutes);
 
 module.exports = app;

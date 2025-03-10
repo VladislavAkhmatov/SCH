@@ -1,7 +1,7 @@
-const Subject = require('../models/subjectModel')
+const Admin = require('../models/adminModel')
 
-exports.getAllSubjects = (req, res) => {
-    Subject.getAll((err, row) => {
+exports.getAllAdmin = (req, res) => {
+    Admin.getAll((err, row) => {
         if (err) {
             res.status(500).json({ error: err.message })
             return
@@ -10,26 +10,25 @@ exports.getAllSubjects = (req, res) => {
     })
 }
 
-exports.getSubjectById = (req, res) => {
+exports.getAdminById = (req, res) => {
     const { id } = req.params
-    Subject.getById(id, (err, row) => {
+    Admin.getById(id, (err, row) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return
         }
         if (!row) {
-            res.status(404).json({ error: 'Предмет не найден' });
+            res.status(404).json({ error: 'Администратор не найден(а)' });
             return
         }
         res.json(row)
     })
 }
 
-exports.createSubject = (req, res) => {
-    const subject = req.body
-    console.log(subject);
+exports.createAdmin = (req, res) => {
+    const admin = req.body
 
-    Subject.create(subject, (err, result) => {
+    Admin.create(admin, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
@@ -38,31 +37,31 @@ exports.createSubject = (req, res) => {
     });
 };
 
-exports.updateSubject = (req, res) => {
+exports.updateAdmin = (req, res) => {
     const { id } = req.params
-    const subject = req.body
-    Subject.update(id, subject, (err, result) => {
+    const admin = req.body
+    Admin.update(id, admin, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
         }
         if (result.updated === 0) {
-            res.status(404).json({ error: 'Предмет не найден' })
+            res.status(404).json({ error: 'Администратор не найден(а)' })
             return
         }
         res.json(result)
     })
 }
 
-exports.deleteSubject = (req, res) => {
+exports.deleteAdmin = (req, res) => {
     const { id } = req.params
-    Subject.delete(id, (err, result) => {
+    Admin.delete(id, (err, result) => {
         if (err) {
             res.status(400).json({ error: err.message })
             return
         }
         if (result.deleted === 0) {
-            res.status(404).json({ error: 'Предмет не найден' })
+            res.status(404).json({ error: 'Администратор не найден(а)' })
             return
         }
         res.json(result)
